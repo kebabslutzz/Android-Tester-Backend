@@ -1,0 +1,73 @@
+services:
+  android-tester-v1:
+    image: postgres:17
+    container_name: android_tester_v1
+    environment:
+      POSTGRES_DB: android_tester_v1
+      POSTGRES_PASSWORD: androidTesterAdmin
+      POSTGRES_USER: androidTesterAdmin
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U androidTesterAdmin -d android_tester_v1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+
+
+  # The Android Worker (where adb, python, and droidbot live)
+  android-device:
+    image: budtmo/docker-android:emulator_11.0
+    privileged: true
+    devices:
+      - "/dev/kvm:/dev/kvm"
+    ports:
+      - "6080:6080" # For Web VNC to see the device
+      - "5555:5555" # ADB port
+
+volumes:
+  postgres_data:
+
+#  # Your Spring Boot App
+#  api-server:
+#    build: .
+#    depends_on:
+#      - android_tester_v1
+#      - android-device
+#    environment:
+#      - ADB_HOST=android-device # Tell Java where to find ADB
+
+
+
+
+
+
+#version: '3.8'
+#
+#services:
+#  formulle_v1:
+#    image: postgres:17
+#    container_name: formulle_v1
+#    environment:
+#      POSTGRES_DB: formulle_v1
+#      POSTGRES_USER: formulleAdmin
+#      POSTGRES_PASSWORD: formulleAdmin
+#    #      TZ: Europe/Kyiv
+#    #      PGTZ: Europe/Kyiv
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U formulleAdmin -d formulle_v1"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#    restart: unless-stopped
+#
+#volumes:
+#  postgres_data:
