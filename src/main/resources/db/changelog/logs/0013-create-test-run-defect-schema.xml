@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="0013-create-test-run-defect-schema" author="kasparas.putrius">
+    <createTable tableName="test_run_defect">
+      <column name="id" type="UUID">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="defect_type_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_test_run_defect_defect_type" referencedTableName="defect_type"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="screenshot_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_test_run_defect_screenshot" referencedTableName="screen_shot"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="test_run_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_test_run_defect_test_run" referencedTableName="test_run"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="application_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_test_run_defect_application" referencedTableName="application"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="defects_count" type="BIGINT"/>
+      <column name="message" type="VARCHAR(255)"/>
+      <column name="created" type="TIMESTAMP"/>
+      <column name="edited" type="TIMESTAMP"/>
+      <column name="edit_count" type="INT"/>
+    </createTable>
+    <rollback>
+      <dropTable tableName="test_run_defect"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

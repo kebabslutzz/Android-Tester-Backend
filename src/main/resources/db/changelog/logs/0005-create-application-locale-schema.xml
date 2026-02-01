@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="0005-create-application-locale-schema" author="kasparas.putrius">
+    <createTable tableName="application_locale">
+      <column name="id" type="UUID">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="application_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_application_locale_application"
+                     referencedTableName="application" referencedColumnNames="id"/>
+      </column>
+      <column name="locale_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_application_locale_locale" referencedTableName="locale"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="created" type="TIMESTAMP"/>
+      <column name="edited" type="TIMESTAMP"/>
+      <column name="edit_count" type="INT"/>
+    </createTable>
+    <rollback>
+      <dropTable tableName="application_locale"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

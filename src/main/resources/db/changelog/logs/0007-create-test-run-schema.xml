@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="0007-create-test-run-schema" author="kasparas.putrius">
+    <createTable tableName="test_run">
+      <column name="id" type="UUID">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="user_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_test_run_user" referencedTableName="app_user"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="run_date" type="TIMESTAMP"/>
+      <column name="description" type="VARCHAR(255)"/>
+      <column name="finished" type="BOOLEAN"/>
+      <column name="created" type="TIMESTAMP"/>
+      <column name="edited" type="TIMESTAMP"/>
+      <column name="edit_count" type="INT"/>
+    </createTable>
+    <rollback>
+      <dropTable tableName="test_run"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

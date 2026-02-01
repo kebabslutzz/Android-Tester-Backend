@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="0003-create-application-schema" author="kasparas.putrius">
+    <createTable tableName="application">
+      <column name="id" type="UUID">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="VARCHAR(255)"/>
+      <column name="package_name" type="VARCHAR(255)"/>
+      <column name="version" type="VARCHAR(255)"/>
+      <column name="apk_file" type="VARCHAR(255)"/>
+      <column name="created" type="TIMESTAMP"/>
+      <column name="edited" type="TIMESTAMP"/>
+      <column name="edit_count" type="INT"/>
+    </createTable>
+    <rollback>
+      <dropTable tableName="application"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

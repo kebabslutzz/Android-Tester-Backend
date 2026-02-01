@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="0010-create-screen-shot-schema" author="kasparas.putrius">
+    <createTable tableName="screen_shot">
+      <column name="id" type="UUID">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="file_name" type="VARCHAR(255)"/>
+      <column name="test_device_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_screen_shot_test_device" referencedTableName="test_device"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="application_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_screen_shot_application" referencedTableName="application"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="invalid" type="BOOLEAN"/>
+      <column name="created" type="TIMESTAMP"/>
+      <column name="edited" type="TIMESTAMP"/>
+      <column name="edit_count" type="INT"/>
+    </createTable>
+    <rollback>
+      <dropTable tableName="screen_shot"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

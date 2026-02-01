@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="0012-create-defect-schema" author="kasparas.putrius">
+    <createTable tableName="defect">
+      <column name="id" type="UUID">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="screenshot_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_defect_screenshot" referencedTableName="screen_shot"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="defect_type_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_defect_defect_type" referencedTableName="defect_type"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="created" type="TIMESTAMP"/>
+      <column name="edited" type="TIMESTAMP"/>
+      <column name="edit_count" type="INT"/>
+    </createTable>
+    <rollback>
+      <dropTable tableName="defect"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

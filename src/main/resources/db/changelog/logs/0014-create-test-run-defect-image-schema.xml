@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="0014-create-test-run-defect-image-schema" author="kasparas.putrius">
+    <createTable tableName="test_run_defect_image">
+      <column name="id" type="UUID">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="test_run_defect_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_test_run_defect_image_test_run_defect"
+                     referencedTableName="test_run_defect" referencedColumnNames="id"/>
+      </column>
+      <column name="image_data" type="BYTEA"/>
+      <column name="created" type="TIMESTAMP"/>
+      <column name="edited" type="TIMESTAMP"/>
+      <column name="edit_count" type="INT"/>
+    </createTable>
+    <rollback>
+      <dropTable tableName="test_run_defect_image"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

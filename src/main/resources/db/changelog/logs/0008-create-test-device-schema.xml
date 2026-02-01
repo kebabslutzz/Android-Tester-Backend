@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="0008-create-test-device-schema" author="kasparas.putrius">
+    <createTable tableName="test_device">
+      <column name="id" type="UUID">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="test_run_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_test_device_test_run" referencedTableName="test_run"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="name" type="VARCHAR(255)"/>
+      <column name="tablet" type="BOOLEAN"/>
+      <column name="screen_size" type="BIGINT"/>
+      <column name="english_interface" type="BOOLEAN"/>
+      <column name="left_to_right" type="BOOLEAN"/>
+      <column name="size" type="VARCHAR(255)"/>
+      <column name="resolution" type="VARCHAR(255)"/>
+      <column name="created" type="TIMESTAMP"/>
+      <column name="edited" type="TIMESTAMP"/>
+      <column name="edit_count" type="INT"/>
+    </createTable>
+    <rollback>
+      <dropTable tableName="test_device"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

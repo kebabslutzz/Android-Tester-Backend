@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="0009-create-job-schema" author="kasparas.putrius">
+    <createTable tableName="job">
+      <column name="id" type="UUID">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="application_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_job_application" referencedTableName="application"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="job_status_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_job_status" referencedTableName="job_status"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="test_run_id" type="UUID">
+        <constraints nullable="true" foreignKeyName="fk_job_test_run" referencedTableName="test_run"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="adb_port" type="INT"/>
+      <column name="container_id" type="VARCHAR(255)"/>
+      <column name="created" type="TIMESTAMP"/>
+      <column name="edited" type="TIMESTAMP"/>
+      <column name="edit_count" type="INT"/>
+    </createTable>
+    <rollback>
+      <dropTable tableName="job"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

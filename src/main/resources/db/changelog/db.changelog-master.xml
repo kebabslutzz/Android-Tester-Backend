@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <include file="logs/0001-create-session-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0002-create-user-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0003-create-application-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0004-create-locale-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0005-create-application-locale-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0006-create-job-status-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0007-create-test-run-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0008-create-test-device-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0009-create-job-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0010-create-screen-shot-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0011-create-defect-type-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0012-create-defect-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0013-create-test-run-defect-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0014-create-test-run-defect-image-schema.xml" relativeToChangelogFile="true"/>
+
+</databaseChangeLog>
