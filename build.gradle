@@ -23,6 +23,9 @@ configurations {
 
 repositories {
   mavenCentral()
+  maven { url 'https://jitpack.io' } // Add this line
+  maven { url 'https://maven.openimaj.org' } // Add this line
+  google()
 }
 
 dependencies {
@@ -70,6 +73,47 @@ dependencies {
   testImplementation 'org.springframework.boot:spring-boot-starter-websocket-test'
   testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
   testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+  // OpenCV (Computer Vision) - OpenPnP bundle includes native binaries
+  implementation 'org.openpnp:opencv:4.9.0-0'
+  // Tesseract (OCR)
+  implementation 'net.sourceforge.tess4j:tess4j:5.10.0'
+  // Image Processing Utils (if needed by specific checks)
+  implementation 'org.openimaj:image-processing:1.3.10'
+  // Logging (Ensure SLF4J is available)
+  implementation 'org.slf4j:slf4j-api:2.0.9'
+
+  // LingPipe (Aliasi) - resolving com.aliasi.*
+//  implementation 'de.julielab:aliasi-lingpipe:4.1.2-rc'
+  // LingPipe (Aliasi) - Switched to official Maven Central artifact
+  implementation 'de.julielab:aliasi-lingpipe:4.1.0'
+
+  // LanguageTool - resolving org.languagetool.*
+  implementation 'org.languagetool:languagetool-core:6.4'
+  implementation 'org.languagetool:language-en:6.4'     // Add other languages as needed (es, fr, etc.)
+
+  // Lingua - resolving com.github.pemistahl.lingua.*
+  implementation 'com.github.pemistahl:lingua:1.2.2'
+
+  // Optimaize Language Detector - resolving com.optimaize.langdetect.*
+  implementation 'com.optimaize.languagedetector:language-detector:0.6'
+
+  // Apache Tika Language Detect - resolving org.apache.tika.langdetect.*
+//  implementation 'org.apache.tika:tika-langdetect-optimaize:2.9.2'
+  implementation 'org.apache.tika:tika-langdetect:1.28.5'
+
+  // OpenNLP - resolving opennlp.tools.*
+  implementation 'org.apache.opennlp:opennlp-tools:2.3.0'
+
+  // Marvin Image Processing - resolving marvin.io.* and marvinplugins.*
+  implementation 'com.github.downgoon:MarvinFramework:1.5.5'
+  implementation 'com.github.downgoon:MarvinPlugins:1.5.5'
+
+  // Jackson XML - resolving com.fasterxml.jackson.dataformat.xml.*
+  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+
+  // Apache Commons Lang 3 - resolving org.apache.commons.lang3.tuple.Pair
+  implementation 'org.apache.commons:commons-lang3'
 }
 
 tasks.named('test') {
