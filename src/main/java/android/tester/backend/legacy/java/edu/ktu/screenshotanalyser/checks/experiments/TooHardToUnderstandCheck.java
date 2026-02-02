@@ -1,0 +1,96 @@
+package android.tester.backend.legacy.java.edu.ktu.screenshotanalyser.checks.experiments;
+
+import android.tester.backend.legacy.java.com.ipeirotis.readability.engine.Readability;
+import android.tester.backend.legacy.java.com.ipeirotis.readability.enums.MetricType;
+import android.tester.backend.legacy.java.edu.ktu.screenshotanalyser.checks.*;
+import android.tester.backend.legacy.java.edu.ktu.screenshotanalyser.context.AppContext;
+import android.tester.backend.legacy.java.edu.ktu.screenshotanalyser.context.State;
+
+import java.util.ArrayList;
+
+/**
+ * https://ipeirotis-hrd.appspot.com/
+ */
+public class TooHardToUnderstandCheck extends BaseTextRuleCheck implements IStateRuleChecker, IAppRuleChecker {
+  //private final double threshold;
+  //private final int minWords;
+
+  //public SU2_TooHardToUnderstandCheck(double threshold, int minWords)
+  //{
+  //	this.threshold = threshold;
+  //	this.minWords = minWords;
+  //}
+
+  public TooHardToUnderstandCheck() {
+    super(-1, "SU2");
+
+    // this(13d, 10);
+  }
+
+  //TODO run on texts extracted from screenshots also, skip garbage from resource files like $1 place-holders
+  @Override
+  public void analyze(AppContext appContext, AppCheckResults results) {
+    /*
+     * for (Entry<String, List<ResourceText>> languageDetails : context.getResources().entrySet()) { String resourceLanguage = languageDetails.getKey(); String readabilityAnalysisLanguage = resourceLanguage.equals("default") ? "en" : resourceLanguage; // no indexes for other languages.. if ("en".equals(readabilityAnalysisLanguage)) { //ReadabilityMeasures measures = new ReadabilityMeasures(readabilityAnalysisLanguage); for (ResourceText resourceText : languageDetails.getValue()) { String text = resourceText.getValue(); is REadable.TooHardToUnderstandCheck.class.9 System.out.println("[" + text + "] - FleschReadingEase: " + flecshReading + ", ari: " + ari); results.add(CheckResult.Nok(type, String.format("Fairly difficult to read text: %s", text), resourceText.getFile() + "@" + resourceText.getKey(), resourceLanguage)); } } }
+     */
+    /*
+     * Document document = new Document(actualText); List<Sentence> sentences = document.sentences(); int sentencesCount = sentences.size(); List<String> words = new ArrayList<>(); sentences.forEach(x -> words.addAll(x.words())); if (words.size() < minWords) { continue; } final double fog = measures.fog(words, sentencesCount); if (fog > this.threshold) { results.add(CheckResult.Nok(type, String.format("Found text violating readalibity index: %s (max: %s) for text: %s", fog, threshold, actualText), resourceText.getFile() + "@" + resourceText.getKey(), resourceLanguage)); }
+     */
+  }
+
+  @Override
+  public void analyze(State state, StateCheckResults results) {
+    var messages = new ArrayList<String>();
+
+    state.getActualControls().stream().filter(p -> null != p.getText()).forEach(p -> messages.add(p.getText()));
+    state.getActualControls().stream().filter(p -> null != p.getContentDescription()).forEach(p -> messages.add(p.getContentDescription()));
+
+    var errors = new StringBuilder();
+
+    for (var message : messages) {
+      if (!isUnderstandable(message)) {
+        errors.append("[" + message.replace('\n', ' ').replace('\r', ' ') + "] ");
+      }
+    }
+
+    if (errors.length() > 0) {
+      results.addAnnotation(new DefectAnnotation(this, state.getImageSize(), "hard 2 understand " + errors));
+    }
+  }
+
+  protected boolean isUnderstandable(String text) {
+    if (text == null) {
+      return true;
+    }
+
+    text = text.trim();
+
+    if (text.isEmpty()) {
+      return true;
+    }
+
+    var readability = new Readability(text);
+    var characters = readability.getMetric(MetricType.CHARACTERS);
+    var words = readability.getMetric(MetricType.WORDS);
+    var sentences = readability.getMetric(MetricType.SENTENCES);
+
+    if ((characters > 0) && (words > 1) && (sentences > 0)) // no 1 word sentences are allowed
+    {
+      var ari = readability.getMetric(MetricType.ARI);
+      var colemanLiau = readability.getMetric(MetricType.COLEMAN_LIAU);
+      var complexWords = readability.getMetric(MetricType.COMPLEXWORDS);
+      var fleschKincaid = readability.getMetric(MetricType.FLESCH_KINCAID);
+      var flecshReading = readability.getMetric(MetricType.FLESCH_READING);
+      var gunningFog = readability.getMetric(MetricType.GUNNING_FOG);
+      var smog = readability.getMetric(MetricType.SMOG);
+      var smogIndex = readability.getMetric(MetricType.SMOG_INDEX);
+      var syllabes = readability.getMetric(MetricType.SYLLABLES);
+
+      // TODO: skip garbage texts, combine index to somethig useable... select index that wprks with single sentence...
+
+      return (flecshReading >= 70) || (smogIndex <= 10);
+    }
+
+    return true;
+  }
+}
