@@ -17,6 +17,11 @@ public interface IStateRuleChecker {
   void analyze(@Nonnull State state, @Nonnull StateCheckResults result);
 
   /**
+   * @return defect code (e.g. "TS2").
+   */
+  String getRuleCode();
+
+  /**
    * @return defects identifier.
    */
   long getId();

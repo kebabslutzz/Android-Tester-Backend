@@ -1,18 +1,21 @@
 package android.tester.backend.entities;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.LastModifiedDate;
 
-import java.util.Date;
+import java.time.OffsetDateTime;
 import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class TestRun {
 
   @Id
@@ -23,19 +26,10 @@ public class TestRun {
   @JoinColumn(name = "user_id")
   private User user;
 
-  @Temporal(TemporalType.TIMESTAMP)
-  private Date runDate;
+  private OffsetDateTime runDate;
 
   private String description;
   private Boolean finished;
-
-  @Temporal(TemporalType.TIMESTAMP)
-  private Date created;
-
-  @Temporal(TemporalType.TIMESTAMP)
-  private Date edited;
-
-  private Integer editCount;
 
   @OneToOne(mappedBy = "testRun")
   private Job job;
@@ -45,4 +39,22 @@ public class TestRun {
 
   @OneToMany(mappedBy = "testRun")
   private Set<TestRunDefect> testRunDefects;
+
+  private OffsetDateTime created;
+
+  @LastModifiedDate
+  private OffsetDateTime edited;
+
+  private Integer editCount;
+
+  @PrePersist
+  public void prePersist() {
+    this.setCreated(OffsetDateTime.now());
+    this.setEditCount(0);
+  }
+
+  @PreUpdate
+  public void preUpdate() {
+    this.setEditCount(this.getEditCount() + 1);
+  }
 }

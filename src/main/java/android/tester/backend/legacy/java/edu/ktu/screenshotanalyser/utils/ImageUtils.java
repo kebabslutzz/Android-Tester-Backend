@@ -1,5 +1,6 @@
 package android.tester.backend.legacy.java.edu.ktu.screenshotanalyser.utils;
 
+import nu.pattern.OpenCV;
 import org.apache.commons.lang3.tuple.Pair;
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -17,6 +18,27 @@ import java.util.UUID;
 
 
 public class ImageUtils {
+
+  // STATIC INITIALIZER FIX: Ensure OpenCV native library is loaded when class is loaded
+//  static {
+//    try {
+//      System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+//    } catch (UnsatisfiedLinkError e) {
+//      try {
+//        // Fallback: Try to use the OpenPnP loader if available (common in Java OpenCV projects)
+//        // Reflection is used here to avoid compile-time errors if the dependency is missing
+//        Class.forName("nu.pattern.OpenCV").getMethod("loadLocally").invoke(null);
+//      } catch (Throwable t) {
+//        System.err.println("CRITICAL: Failed to load OpenCV native library. Ensure proper configuration/dependencies. " + t.getMessage());
+//        // e.printStackTrace();
+//      }
+//    }
+//  }
+
+  static {
+    // Initialize OpenCV from the OpenPnP dependency
+    OpenCV.loadLocally();
+  }
 
   private static final double KMEANS_IMG_SIZE = 256;
 
@@ -68,7 +90,8 @@ public class ImageUtils {
   }
 
   static void main(String[] args) throws IOException {
-    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+//    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    // Moved to static block
   }
 
   public static Scalar zero = new Scalar(0, 0, 0);

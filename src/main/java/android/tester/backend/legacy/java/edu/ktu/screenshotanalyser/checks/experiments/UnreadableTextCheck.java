@@ -19,6 +19,11 @@ public class UnreadableTextCheck extends BaseRuleCheck implements IStateRuleChec
 
   @Override
   public void analyze(State state, StateCheckResults results) {
+    // If device information is missing, we cannot calculate physical size
+    if (state.getTestDevice() == null) {
+      return;
+    }
+
     for (var control : state.getActualControls()) {
       var result = isTextTooSmall(control, state);
 

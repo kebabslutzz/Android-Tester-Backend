@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="0017-add-file-location-to-test-run-defect-image" author="kasparas.putrius">
+    <dropColumn tableName="test_run_defect_image" columnName="image_data"/>
+    <addColumn tableName="test_run_defect_image">
+      <column name="file_location" type="VARCHAR(1024)" defaultValue=""/>
+    </addColumn>
+
+    <rollback>
+      <addColumn tableName="test_run_defect_image">
+        <column name="image_data"></column>
+      </addColumn>
+      <dropColumn tableName="test_run_defect_image" columnName="file_location"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

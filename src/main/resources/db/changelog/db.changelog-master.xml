@@ -19,5 +19,8 @@
   <include file="logs/0012-create-defect-schema.xml" relativeToChangelogFile="true"/>
   <include file="logs/0013-create-test-run-defect-schema.xml" relativeToChangelogFile="true"/>
   <include file="logs/0014-create-test-run-defect-image-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0015-add-created-time-for-device.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0016-add-apk-path-to-application.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0017-add-file-location-to-test-run-defect-image.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

@@ -21,32 +21,111 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public class TextExtractor {
+
+  static {
+    // Ensure OpenCV is loaded before any OpenCV classes are used
+    // Note: You must have the opencv dll/so in your java.library.path
+    try {
+      System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    } catch (UnsatisfiedLinkError e) {
+      System.err.println("Native code library failed to load. \n" + e);
+      // Fallback or specific handling if needed, usually Nuget/Maven packages handle this if configured correctly
+      // otherwise, -Djava.library.path=path/to/opencv/lib must be set in launch config
+    }
+  }
+
   private final ITesseract tesseract;
   private final float confidenceLevel;
+
+  // Hardcoded path based on user requirement
+  private static final String GOCR_PATH = "C:\\gocr\\gocr048.exe";
+
+//  public TextExtractor(float confidenceLevel, String language) {
+//    var logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Tesseract.class.getName());
+//    logger.setLevel(ch.qos.logback.classic.Level.ALL);
+//
+//    //logger.getRootLogger().setLevel(Level.OFF);
+//
+//    this.confidenceLevel = confidenceLevel;
+//
+//    this.tesseract = new Tesseract();
+//    this.tesseract.setDatapath(new File("./tessdata_best").getAbsolutePath()); // TODO: folder in app settings
+//    this.tesseract.setLanguage(language);
+//
+//
+//    List<String> config = new ArrayList<>();
+//
+//    String[] f = new String[]{"load_system_dawg", "load_freq_dawg",
+//      "load_punc_dawg",
+//      "load_number_dawg",
+//      "load_unambig_dawg",
+//      "load_bigram_dawg",
+//      "load_fixed_length_dawgs",};
+//
+//    tesseract.setTessVariable("debug_file", "e:\\1\\tesseract.log");
+//  }
+
+//  public TextExtractor(float confidenceLevel, String language) {
+//    var logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Tesseract.class.getName());
+//    logger.setLevel(ch.qos.logback.classic.Level.ALL);
+//
+//    this.confidenceLevel = confidenceLevel;
+//
+//    this.tesseract = new Tesseract();
+//    // Changed to standard 'tessdata' and checking existence
+//    File tessDataFolder = new File("./tessdata");
+//    if (!tessDataFolder.exists()) {
+//      tessDataFolder = new File("./tessdata_best");
+//    }
+//
+//    // Tesseract typically uses ISO 639-2/T 3-letter codes (e.g., "eng" instead of "en")
+//    String tessLanguage = language;
+//    if ("en".equalsIgnoreCase(language)) {
+//      tessLanguage = "eng";
+//    }
+//
+//    // Fallback if folder exists, otherwise let Tesseract throw its own error or use default system install
+//    if (tessDataFolder.exists()) {
+//      this.tesseract.setDatapath(tessDataFolder.getAbsolutePath());
+//    }
+//
+//    this.tesseract.setLanguage(tessLanguage);
+//
+//    List<String> config = new ArrayList<>();
+//
+//    String[] f = new String[]{"load_system_dawg", "load_freq_dawg",
+//      "load_punc_dawg",
+//      "load_number_dawg",
+//      "load_unambig_dawg",
+//      "load_bigram_dawg",
+//      "load_fixed_length_dawgs",};
+//
+//    // Disabled hardcoded E drive path for logging
+//    // tesseract.setTessVariable("debug_file", "e:\\1\\tesseract.log");
+//  }
 
   public TextExtractor(float confidenceLevel, String language) {
     var logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Tesseract.class.getName());
     logger.setLevel(ch.qos.logback.classic.Level.ALL);
 
-    //logger.getRootLogger().setLevel(Level.OFF);
-
     this.confidenceLevel = confidenceLevel;
 
     this.tesseract = new Tesseract();
-    this.tesseract.setDatapath(new File("./tessdata_best").getAbsolutePath()); // TODO: folder in app settings
-    this.tesseract.setLanguage(language);
+    File tessDataFolder = new File("./tessdata");
+    if (!tessDataFolder.exists()) {
+      tessDataFolder = new File("./tessdata_best");
+    }
 
+    String tessLanguage = language;
+    if ("en".equalsIgnoreCase(language)) {
+      tessLanguage = "eng";
+    }
 
-    List<String> config = new ArrayList<>();
+    if (tessDataFolder.exists()) {
+      this.tesseract.setDatapath(tessDataFolder.getAbsolutePath());
+    }
 
-    String[] f = new String[]{"load_system_dawg", "load_freq_dawg",
-      "load_punc_dawg",
-      "load_number_dawg",
-      "load_unambig_dawg",
-      "load_bigram_dawg",
-      "load_fixed_length_dawgs",};
-
-    tesseract.setTessVariable("debug_file", "e:\\1\\tesseract.log");
+    this.tesseract.setLanguage(tessLanguage);
   }
 
   public String extract(BufferedImage image) {
@@ -56,9 +135,12 @@ public class TextExtractor {
       var os = new ByteArrayOutputStream();
       ImageIO.write(image, "png", os);
 
-      var process = Runtime.getRuntime().exec("gocr049.exe", new String[]{"PYTHONIOENCODING=utf8"}, null);
+//      var process = Runtime.getRuntime().exec("gocr.exe", new String[]{"PYTHONIOENCODING=utf8"}, null);
+      // UPDATED: Using specific path for gocr
+      var process = Runtime.getRuntime().exec(new String[]{GOCR_PATH}, new String[]{"PYTHONIOENCODING=utf8"});
 
       process.getOutputStream().write(os.toByteArray());
+      process.getOutputStream().close(); // Important to close stream for input to finish
 
       try (var reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
         String line = null;
@@ -255,7 +337,7 @@ public class TextExtractor {
 
       Mat grayScaleImage = convertToGrayScale(sourceImage);
 
-      grayScaleImage = convertToDarkLettersOnWhite(sourceImage);
+      // grayScaleImage = convertToDarkLettersOnWhite(sourceImage); // original likely meant grayScaleImage
 
 
       Mat gaussianBlurredImage = new Mat();

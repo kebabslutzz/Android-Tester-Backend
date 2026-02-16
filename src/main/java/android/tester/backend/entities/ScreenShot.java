@@ -1,18 +1,21 @@
 package android.tester.backend.entities;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.LastModifiedDate;
 
-import java.util.Date;
+import java.time.OffsetDateTime;
 import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class ScreenShot {
 
   @Id
@@ -31,14 +34,24 @@ public class ScreenShot {
 
   private Boolean invalid;
 
-  @Temporal(TemporalType.TIMESTAMP)
-  private Date created;
+  @OneToMany(mappedBy = "screenShot")
+  private Set<Defect> defects;
 
-  @Temporal(TemporalType.TIMESTAMP)
-  private Date edited;
+  private OffsetDateTime created;
+
+  @LastModifiedDate
+  private OffsetDateTime edited;
 
   private Integer editCount;
 
-  @OneToMany(mappedBy = "screenShot")
-  private Set<Defect> defects;
+  @PrePersist
+  public void prePersist() {
+    this.setCreated(OffsetDateTime.now());
+    this.setEditCount(0);
+  }
+
+  @PreUpdate
+  public void preUpdate() {
+    this.setEditCount(this.getEditCount() + 1);
+  }
 }

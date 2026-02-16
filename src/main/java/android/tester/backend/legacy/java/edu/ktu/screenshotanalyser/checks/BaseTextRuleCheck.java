@@ -5,12 +5,13 @@ import android.tester.backend.legacy.java.edu.ktu.screenshotanalyser.context.Con
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.github.pemistahl.lingua.api.LanguageDetectorBuilder;
-import com.optimaize.langdetect.LanguageDetectorImpl;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.apache.tika.langdetect.OptimaizeLangDetector;
 import org.languagetool.JLanguageTool;
 import org.languagetool.Language;
 import org.languagetool.Languages;
+import org.languagetool.language.AmericanEnglish;
+import org.languagetool.language.BritishEnglish;
 import org.languagetool.rules.RuleMatch;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +67,9 @@ public abstract class BaseTextRuleCheck extends BaseRuleCheck {
 
       try {
         var langTool = getSpellChecker(lang);
+        if (langTool == null) {
+          continue; // Skip if no tool available to avoid NPE
+        }
         var matches = langTool.check(message);
 
         for (var match : matches) {
@@ -171,10 +175,28 @@ public abstract class BaseTextRuleCheck extends BaseRuleCheck {
     return result.toString().trim();
   }
 
-  private static String determineLanguage(String message) {
-    // final LanguageIdentifier langIdentifier = new LanguageIdentifier(message);
-    // return langIdentifier.getLanguage();
+//  private static String determineLanguage(String message) {
+//    // final LanguageIdentifier langIdentifier = new LanguageIdentifier(message);
+//    // return langIdentifier.getLanguage();
+//
+//    synchronized (languagesCache) {
+//      if (languageDetector == null) {
+//        languageDetector = (OptimaizeLangDetector) new OptimaizeLangDetector().loadModels();
+//
+//        var logContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+//        var log = logContext.getLogger("com.optimaize.langdetect.LanguageDetectorImpl");
+//        log.setLevel(Level.OFF);
+//
+//        var logger = LoggerFactory.getLogger(LanguageDetectorImpl.class);
+//
+//        logger.debug("nnnn");
+//      }
+//    }
+//
+//    return languageDetector.detect(message).getLanguage();
+//  }
 
+  private static String determineLanguage(String message) {
     synchronized (languagesCache) {
       if (languageDetector == null) {
         languageDetector = (OptimaizeLangDetector) new OptimaizeLangDetector().loadModels();
@@ -182,10 +204,6 @@ public abstract class BaseTextRuleCheck extends BaseRuleCheck {
         var logContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         var log = logContext.getLogger("com.optimaize.langdetect.LanguageDetectorImpl");
         log.setLevel(Level.OFF);
-
-        var logger = LoggerFactory.getLogger(LanguageDetectorImpl.class);
-
-        logger.debug("nnnn");
       }
     }
 
@@ -348,25 +366,45 @@ public abstract class BaseTextRuleCheck extends BaseRuleCheck {
     return true;
   }
 
-  protected static boolean isSpellingCorrect(String message, List<Language> languages) {
-    for (var language : languages) {
-      var langTool = new JLanguageTool(language);
+//  protected static boolean isSpellingCorrect(String message, List<Language> languages) {
+//    for (var language : languages) {
+//      var langTool = new JLanguageTool(language);
+//
+//      try {
+//        var matches = langTool.check(message);
+//
+//        for (var match : matches) {
+//          System.out.println("Grammar check failed: " + match.getMessage() + ". Possible fixes: " + match.getSuggestedReplacements() + ". Text was: " + message);
+//
+//          return false;
+//        }
+//      } catch (IOException ex) {
+//        ex.printStackTrace();
+//      }
+//    }
+//
+//    return true;
+//  }
 
+  protected static boolean isSpellingCorrect(String message, List<Language> languages) {
+    // This static method seems to instantiate new tools every time, which is inefficient and error prone
+    // It is safer to rely on instance methods or correct logic, but keeping existing structure:
+    for (var language : languages) {
+      // Basic instantiation without advanced config
+      JLanguageTool langTool = new JLanguageTool(language);
       try {
         var matches = langTool.check(message);
-
         for (var match : matches) {
-          System.out.println("Grammar check failed: " + match.getMessage() + ". Possible fixes: " + match.getSuggestedReplacements() + ". Text was: " + message);
-
+          System.out.println("Grammar check failed: " + match.getMessage());
           return false;
         }
       } catch (IOException ex) {
         ex.printStackTrace();
       }
     }
-
     return true;
   }
+
 
   protected boolean isTranslateable(String message, AppContext appContext) {
     if (null == message) {
@@ -403,28 +441,172 @@ public abstract class BaseTextRuleCheck extends BaseRuleCheck {
     return (wordsCount != 0) && (!isIgnoredWord(message, appContext));
   }
 
-  private static synchronized JLanguageTool getSpellChecker(Language language) {
-    var checker = spellCheckers.get(language);
+//  protected synchronized JLanguageTool getSpellChecker(Language lang) {
+//    if (spellCheckers.containsKey(lang)) {
+//      return spellCheckers.get(lang);
+//    }
+//
+//    try {
+//      JLanguageTool langTool = null;
+//
+//      if ("en-GB".equals(lang) || "en".equals(lang)) {
+//        langTool = new JLanguageTool(new BritishEnglish());
+//      } else if ("en-US".equals(lang)) {
+//        langTool = new JLanguageTool(new AmericanEnglish());
+//      }
+//      // Add other languages if they were originally there
+//
+//      if (langTool != null) {
+//        // This is likely where it fails: activating rules
+//        // langTool.activateDefaultPatternRules();
+//        // Often activateDefaultPatternRules() causes issues with missing resources
+//      }
+//
+//      spellCheckers.put(lang, langTool);
+//      return langTool;
+//
+//    } catch (Throwable t) {
+//      System.err.println("Failed to initialize JLanguageTool for " + lang + ": " + t.getMessage());
+//      return null; // Return null so callers can handle it gracefully
+//    }
+//  }
 
-    if (null == checker) {
-      checker = new JLanguageTool(language);
+//  protected synchronized JLanguageTool getSpellChecker(Language lang) {
+//    if (spellCheckers.containsKey(lang)) {
+//      return spellCheckers.get(lang);
+//    }
+//
+//    try {
+//      JLanguageTool langTool;
+//      String shortCode = lang.getShortCode();
+//
+//      // Explicitly instantiate known English variants to ensure classes are loaded
+//      if ("en-GB".equalsIgnoreCase(shortCode)) {
+//        langTool = new JLanguageTool(new BritishEnglish());
+//      } else if ("en-US".equalsIgnoreCase(shortCode)) {
+//        langTool = new JLanguageTool(new AmericanEnglish());
+//      } else {
+//        langTool = new JLanguageTool(lang);
+//      }
+//
+//      // Important: Disable logic that often fails in non-standard environments
+//      // We do NOT call activateDefaultPatternRules() here as it triggers exception.
+//
+//      spellCheckers.put(lang, langTool);
+//      return langTool;
+//
+//    } catch (Throwable t) {
+//      // Log simple warning, return null to avoid crashing entire analysis
+//      System.err.println("Warning: Failed to initialize spellchecker for " + lang.getName() + ": " + t.getMessage());
+//      return null;
+//    }
+//  }
 
-      for (var rule : checker.getAllRules()) {
-        if (!rule.isDictionaryBasedSpellingRule()) {
-          checker.disableRule(rule.getId());
-        }
-      }
+//  protected synchronized JLanguageTool getSpellChecker(Language lang) {
+//    if (spellCheckers.containsKey(lang)) {
+//      return spellCheckers.get(lang);
+//    }
+//
+//    try {
+//      JLanguageTool langTool;
+//      String shortCode = lang.getShortCode();
+//
+//      // Instantiate the language implementation directly
+//      Language languageImpl;
+//      if ("en-GB".equalsIgnoreCase(shortCode)) {
+//        languageImpl = new BritishEnglish();
+//      } else if ("en-US".equalsIgnoreCase(shortCode)) {
+//        languageImpl = new AmericanEnglish();
+//      } else {
+//        languageImpl = lang;
+//      }
+//
+//      // Initialize WITHOUT activating all default rules immediately to prevent crashing on missing resources
+//      langTool = new JLanguageTool(languageImpl, null);
+//
+//      // Manually disable categories that often cause "Could not activate rules" errors (e.g. confusion sets requiring n-grams)
+//      for (org.languagetool.rules.Rule rule : langTool.getAllRules()) {
+//        if (rule.isDictionaryBasedSpellingRule()) {
+//          // Ensure spelling is ON
+//          if (!langTool.isEnabled(rule.getId())) {
+//            langTool.enableRule(rule.getId());
+//          }
+//        }
+//      }
+//
+//      spellCheckers.put(lang, langTool);
+//      return langTool;
+//
+//    } catch (Throwable t) {
+//      System.err.println("Warning: Failed to initialize spellchecker for " + lang.getName() + ": " + t.getMessage());
+//      return null;
+//    }
+//  }
 
-      spellCheckers.put(language, checker);
-    } else {
-      //System.out.println("cached: " + language.getName());
+  protected synchronized JLanguageTool getSpellChecker(Language lang) {
+    if (spellCheckers.containsKey(lang)) {
+      return spellCheckers.get(lang);
     }
 
-    return checker;
+    try {
+      JLanguageTool langTool;
+      String shortCode = lang.getShortCode();
+      Language languageImpl;
+
+      if ("en-GB".equalsIgnoreCase(shortCode)) {
+        languageImpl = new BritishEnglish();
+      } else if ("en-US".equalsIgnoreCase(shortCode)) {
+        languageImpl = new AmericanEnglish();
+      } else {
+        languageImpl = lang;
+      }
+
+      // 1. Initialize with motherTongue = null explicitly to avoid auto-activation.
+      langTool = new JLanguageTool(languageImpl, null);
+
+      // 2. Wrap rule iteration in a try-catch block.
+      // calling .getAllRules() can trigger initialization of broken rules.
+      try {
+        // Disable all rules initially to be safe
+        for (org.languagetool.rules.Rule rule : langTool.getAllRules()) {
+          try {
+            langTool.disableRule(rule.getId());
+          } catch (Throwable ignored) {
+          }
+        }
+
+        // Re-enable ONLY dictionary-based spelling rules
+        for (org.languagetool.rules.Rule rule : langTool.getAllRules()) {
+          if (rule.isDictionaryBasedSpellingRule()) {
+            try {
+              langTool.enableRule(rule.getId());
+            } catch (Throwable ignored) {
+            }
+          }
+        }
+      } catch (Throwable t) {
+        // If we can't even iterate rules, we log a warning but still return the tool
+        // It might still work for basic tokenization.
+        System.err.println("Warning: Partial rule load failure for " + lang.getName() + ": " + t.getMessage());
+      }
+
+      spellCheckers.put(lang, langTool);
+      return langTool;
+
+    } catch (Throwable t) {
+      System.err.println("Warning: Spellchecker init failed for " + lang.getName() + ": " + t.getMessage());
+      return null;
+    }
   }
 
   private static final HashMap<Language, JLanguageTool> spellCheckers = new HashMap<>();
-  private static final String[] ignoredWords = new String[]{"dd-mm-yy", "apk", "facebook", "sdcard", "bluetooth", "png", "gif", "microsoft", "youtube", "paypal", "ru", "iCloud", "AppleId", "nl", "yyyy", "javascript", "js", "wikipedia", "uk", "edu", "wifi", "iTouch", "url", "tv", "github", "linkedin", "google", "twitter", "email", "wizzair", "wi-fi", "csv", "mBar", "mmHg", "latin", "hPa", "reCAPTCHA", "app", "mAh", "kg", "ft.", "Google Drive", "lb", "lbs", "Kcal", "Apple Watch", "MB", "dd/mm", "mm", "min", "km/h", "mph", "kph", "cm", "mi/h", "lat/long", "hh:mm", "mmmm yyyy", "sec", "Pinterest", "Creative Cloud", "rgb", "Adobe ID", "Adobe", "Adobe Photoshop Express", "Instagram", "Tumblr", "Dropbox", "mbps", "Alipay", "WeChat", "Android", "Mastercard", "iban", "sms", "Weibo", "Maestro", "Visa", "AMEX", "min", "max", "sin", "tan", "cos", "det", "asin", "atan", "USB", "jpeg", "mjpeg", "cpu", "led", "km", "google play", "google"};
+  private static final String[] ignoredWords = new String[]{"dd-mm-yy", "apk", "facebook", "sdcard", "bluetooth", "png", "gif", "microsoft", "youtube", "paypal", "ru",
+    "iCloud", "AppleId", "nl", "yyyy", "javascript", "js", "wikipedia", "uk", "edu", "wifi", "iTouch", "url", "tv", "github", "linkedin", "google", "twitter", "email",
+    "wizzair", "wi-fi", "csv", "mBar", "mmHg", "latin", "hPa", "reCAPTCHA", "app", "mAh", "kg", "ft.", "Google Drive", "lb", "lbs", "Kcal", "Apple Watch", "MB", "dd/mm",
+    "mm", "min", "km/h", "mph", "kph", "cm", "mi/h", "lat/long", "hh:mm", "mmmm yyyy", "sec", "Pinterest", "Creative Cloud", "rgb", "Adobe ID", "Adobe", "Adobe Photoshop Express",
+    "Instagram", "Tumblr", "Dropbox", "mbps", "Alipay", "WeChat", "Android", "Mastercard", "iban", "sms", "Weibo", "Maestro", "Visa", "AMEX", "min", "max", "sin", "tan",
+    "cos", "det", "asin", "atan", "USB", "jpeg", "mjpeg", "cpu", "led", "km", "google play", "google"
+  };
   private static final String[] ignoredFragments = new String[]{"�", "�", "?", "$", "@", "�", "�", "_", "http://", "https://"};
   private static final HashMap<String, List<Language>> languagesCache = new HashMap<>();
   private static OptimaizeLangDetector languageDetector = null;

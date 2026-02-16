@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="0016-add-created-time-for-device" author="kasparas.putrius">
+    <addColumn tableName="application">
+      <column name="apk_path" type="VARCHAR(1024)" defaultValue="0"/>
+    </addColumn>
+
+    <rollback>
+      <dropColumn tableName="application" columnName="apk_path"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

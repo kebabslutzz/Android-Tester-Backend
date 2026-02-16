@@ -23,8 +23,8 @@ configurations {
 
 repositories {
   mavenCentral()
-  maven { url 'https://jitpack.io' } // Add this line
-  maven { url 'https://maven.openimaj.org' } // Add this line
+  maven { url = 'https://jitpack.io' }
+  maven { url = 'https://maven.openimaj.org' }
   google()
 }
 
@@ -89,8 +89,10 @@ dependencies {
   implementation 'de.julielab:aliasi-lingpipe:4.1.0'
 
   // LanguageTool - resolving org.languagetool.*
-  implementation 'org.languagetool:languagetool-core:6.4'
-  implementation 'org.languagetool:language-en:6.4'     // Add other languages as needed (es, fr, etc.)
+//  implementation 'org.languagetool:languagetool-core:6.4'
+  implementation 'org.languagetool:languagetool-core:6.6'
+//  implementation 'org.languagetool:language-en:6.4'     // Add other languages as needed (es, fr, etc.)
+  implementation 'org.languagetool:language-en:6.6'     // Add other languages as needed (es, fr, etc.)
 
   // Lingua - resolving com.github.pemistahl.lingua.*
   implementation 'com.github.pemistahl:lingua:1.2.2'
@@ -114,10 +116,23 @@ dependencies {
 
   // Apache Commons Lang 3 - resolving org.apache.commons.lang3.tuple.Pair
   implementation 'org.apache.commons:commons-lang3'
+
+  implementation 'com.google.guava:guava:33.5.0-jre' // Force JRE version
+//  modules {
+//    module("com.google.guava:guava") {
+//      replacedBy("com.google.guava:guava", "Use JDK flavor of Guava instead of Android flavor")
+//    }
+//  }
 }
 
 tasks.named('test') {
   useJUnitPlatform()
+  // "Allow the unnamed module (the classpath) to access native code"
+  jvmArgs = ['--enable-native-access=ALL-UNNAMED']
+}
+
+tasks.named('bootRun') {
+  jvmArgs = ['--enable-native-access=ALL-UNNAMED']
 }
 
 tasks.named('asciidoctor') {

@@ -227,6 +227,9 @@ public class State {
   }
 
   public String predictLanguage() {
+    if (this.context == null || this.context.getSystemContext() == null) {
+      return "en"; // Default fallback
+    }
     var message = getActualControls().stream().filter(x -> x.getText() != null).map(Control::getText).collect(Collectors.joining(". "));
 
     return this.context.getSystemContext().predictLanguage(message);
@@ -324,7 +327,10 @@ public class State {
 
   private Rect loadImageSize() {
     if (this.image.instance() == ImageUtils.NULL_IMAGE) {
-      return new Rect(0, 0, this.testDevice.screenWidth, this.testDevice.screenHeight);
+      // Fallback if image load fails or is null, assuming device is present, otherwise 0
+      int w = (this.testDevice != null) ? this.testDevice.screenWidth : 0;
+      int h = (this.testDevice != null) ? this.testDevice.screenHeight : 0;
+      return new Rect(0, 0, w, h);
     }
 
     return new Rect(0, 0, this.image.instance().getWidth(), this.image.instance().getHeight());

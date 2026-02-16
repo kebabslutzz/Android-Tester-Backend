@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="0015-add-created-time-for-device" author="kasparas.putrius">
+    <addColumn tableName="app_user">
+      <column name="version" type="int" defaultValue="0"/>
+    </addColumn>
+    <addColumn tableName="application">
+      <column name="version_number" type="int" defaultValue="0"/>
+    </addColumn>
+
+    <rollback>
+      <dropColumn tableName="app_user" columnName="version"/>
+      <dropColumn tableName="application" columnName="version_number"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

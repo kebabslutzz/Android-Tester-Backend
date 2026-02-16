@@ -1,17 +1,24 @@
 package android.tester.backend.services.legacy;
 
-import android.tester.backend.entities.ScreenShot;
+import android.tester.backend.entities.*;
 import android.tester.backend.legacy.java.edu.ktu.screenshotanalyser.checks.IStateRuleChecker;
 import android.tester.backend.legacy.java.edu.ktu.screenshotanalyser.checks.StateCheckResults;
 import android.tester.backend.legacy.java.edu.ktu.screenshotanalyser.context.AppContext;
 import android.tester.backend.legacy.java.edu.ktu.screenshotanalyser.context.State;
 import android.tester.backend.repositories.DefectRepository;
 import android.tester.backend.repositories.DefectTypeRepository;
+import android.tester.backend.repositories.TestRunDefectImageRepository;
+import android.tester.backend.repositories.TestRunDefectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
@@ -21,6 +28,8 @@ public class LegacyAnalysisService {
   private final List<IStateRuleChecker> checkers;
   private final DefectTypeRepository defectTypeRepository;
   private final DefectRepository defectRepository;
+  private final TestRunDefectRepository testRunDefectRepository;
+  private final TestRunDefectImageRepository testRunDefectImageRepository;
 
   /**
    * Analyzes a single screenshot using the legacy logic.
@@ -67,36 +76,79 @@ public class LegacyAnalysisService {
       }
 
       // 4. Map Legacy Results -> Database Entities
-      // Assuming legacyResults.getAnnotations() returns the list of defects found
-      // You will need to inspect the actual 'StateCheckResults' class to see how to get data out.
+      for (var annotation : legacyResults.getAnnotations()) {
+        String ruleCode = annotation.defect().getRuleCode();
+        String description = annotation.message(); // or checker name?
 
-             /*
-             // Pseudo-code implementation based on typical legacy structure:
-             for (var annotation : legacyResults.getAnnotations()) {
-                 String limitMsg = annotation.getMessage();
-                 String ruleCode = annotation.getCheck().getRuleCode(); // e.g. "TS2"
+        // Find or Create DefectType
+        DefectType defectType = defectTypeRepository.findByCode(ruleCode)
+          .orElseGet(() -> defectTypeRepository.save(
+            DefectType.builder()
+              .code(ruleCode)
+              .description(description)
+              .created(OffsetDateTime.now())
+              .build()
+          ));
 
-                 // Find or Create DefectType
-                 DefectType defectType = defectTypeRepository.findByCode(ruleCode)
-                     .orElseGet(() -> defectTypeRepository.save(
-                         DefectType.builder()
-                             .code(ruleCode)
-                             .description(annotation.getCheck().getName())
-                             .created(new Date())
-                             .build()
-                     ));
+        // Save Defect (The low-level finding)
+        Defect defect = Defect.builder()
+          .screenShot(screenShot)
+          .defectType(defectType)
+          .created(OffsetDateTime.now())
+          .build();
 
-                 // Save Defect
-                 Defect defect = Defect.builder()
-                     .screenShot(screenShot)
-                     .defectType(defectType)
-                     .created(new Date())
-                     // You could store the bounding box (Rect) in a new column or description
-                     .build();
+        defectRepository.save(defect);
 
-                 defectRepository.save(defect);
-             }
-             */
+        // Save TestRunDefect (The report item)
+        // We aggregate specific defects into a report item.
+        // For simplicity, we create one TestRunDefect per Defect found here,
+        // but typically you might group them by DefectType + TestRun.
+        // Keeping it simple as per "add the said defected image..." request.
+
+        TestRun testRun = screenShot.getTestDevice().getTestRun();
+        Application application = screenShot.getApplication();
+
+        TestRunDefect testRunDefect = TestRunDefect.builder()
+          .testRun(testRun)
+          .application(application)
+          .screenShot(screenShot)
+          .defectType(defectType)
+          .defectsCount(1L)
+          .message(description)
+          .build();
+
+        testRunDefect = testRunDefectRepository.save(testRunDefect);
+
+        // Create Visual Proof Image
+        // Draw the bounding box on the image
+        if (annotation.bounds() != null) {
+          try {
+            BufferedImage originalImage = ImageIO.read(imageFile);
+            Graphics2D g2d = originalImage.createGraphics();
+
+            g2d.setColor(Color.RED);
+            g2d.setStroke(new BasicStroke(3));
+            g2d.drawRect(annotation.bounds().x, annotation.bounds().y, annotation.bounds().width, annotation.bounds().height);
+            g2d.dispose();
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(originalImage, "png", baos);
+            byte[] imageBytes = baos.toByteArray();
+
+            TestRunDefectImage defectImage = TestRunDefectImage.builder()
+              .testRunDefect(testRunDefect)
+              .imageData(imageBytes)
+              .created(OffsetDateTime.now())
+              .build();
+
+            testRunDefectImageRepository.save(defectImage);
+
+          } catch (Exception e) {
+            System.err.println("Failed to create visual proof for defect: " + ruleCode);
+            e.printStackTrace();
+          }
+        }
+      }
 
     } catch (Exception e) {
       e.printStackTrace();
