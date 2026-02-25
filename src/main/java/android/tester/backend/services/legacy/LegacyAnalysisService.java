@@ -9,6 +9,8 @@ import android.tester.backend.repositories.DefectRepository;
 import android.tester.backend.repositories.DefectTypeRepository;
 import android.tester.backend.repositories.TestRunDefectImageRepository;
 import android.tester.backend.repositories.TestRunDefectRepository;
+import android.tester.backend.services.logging.LogService;
+import android.tester.backend.services.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +32,8 @@ public class LegacyAnalysisService {
   private final DefectRepository defectRepository;
   private final TestRunDefectRepository testRunDefectRepository;
   private final TestRunDefectImageRepository testRunDefectImageRepository;
+  private final StorageService storageService;
+  private final LogService logService;
 
   /**
    * Analyzes a single screenshot using the legacy logic.
@@ -121,6 +125,33 @@ public class LegacyAnalysisService {
 
         // Create Visual Proof Image
         // Draw the bounding box on the image
+//        if (annotation.bounds() != null) {
+//          try {
+//            BufferedImage originalImage = ImageIO.read(imageFile);
+//            Graphics2D g2d = originalImage.createGraphics();
+//
+//            g2d.setColor(Color.RED);
+//            g2d.setStroke(new BasicStroke(3));
+//            g2d.drawRect(annotation.bounds().x, annotation.bounds().y, annotation.bounds().width, annotation.bounds().height);
+//            g2d.dispose();
+//
+//            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//            ImageIO.write(originalImage, "png", baos);
+//            byte[] imageBytes = baos.toByteArray();
+//
+//            TestRunDefectImage defectImage = TestRunDefectImage.builder()
+//              .testRunDefect(testRunDefect)
+//              .imageData(imageBytes)
+//              .created(OffsetDateTime.now())
+//              .build();
+//
+//            testRunDefectImageRepository.save(defectImage);
+//
+//          } catch (Exception e) {
+//            System.err.println("Failed to create visual proof for defect: " + ruleCode);
+//            e.printStackTrace();
+//          }
+//        }
         if (annotation.bounds() != null) {
           try {
             BufferedImage originalImage = ImageIO.read(imageFile);
@@ -131,20 +162,29 @@ public class LegacyAnalysisService {
             g2d.drawRect(annotation.bounds().x, annotation.bounds().y, annotation.bounds().width, annotation.bounds().height);
             g2d.dispose();
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(originalImage, "png", baos);
-            byte[] imageBytes = baos.toByteArray();
+            // CHANGED: Save to storage service instead of byte array
+            UUID userId = testRun.getUser() != null ? testRun.getUser().getId() : UUID.fromString("00000000-0000-0000-0000-000000000001"); // Fallback if user is null or handle appropriately
+
+            // Assuming packageName is available on Application entity, fallback to "unknown.package" if needed
+            String packageName = application.getPackageName() != null ? application.getPackageName() : "unknown.package";
+
+            String savedFileName = storageService.saveDefectImage(
+              originalImage,
+              userId,
+              packageName,
+              testRun.getId()
+            );
 
             TestRunDefectImage defectImage = TestRunDefectImage.builder()
               .testRunDefect(testRunDefect)
-              .imageData(imageBytes)
+              .fileLocation(savedFileName) // Store filename
               .created(OffsetDateTime.now())
               .build();
 
             testRunDefectImageRepository.save(defectImage);
 
           } catch (Exception e) {
-            System.err.println("Failed to create visual proof for defect: " + ruleCode);
+            logService.addLog("Failed to create visual proof for defect: " + ruleCode);
             e.printStackTrace();
           }
         }
@@ -152,6 +192,8 @@ public class LegacyAnalysisService {
 
     } catch (Exception e) {
       e.printStackTrace();
+    } finally {
+      logService.addLog("Legacy analysis finished for screenshot: " + screenShot.getId());
     }
   }
 }

@@ -1,5 +1,10 @@
 package android.tester.backend.services.storage;
 
+import android.tester.backend.dtos.ApplicationJobScreenshotsResponse;
+import android.tester.backend.entities.ScreenShot;
+import android.tester.backend.repositories.ScreenshotRepository;
+import android.tester.backend.services.logging.LogService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -10,16 +15,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class StorageService {
 
   private static final String BASE_DIR = "C:\\Users\\kaspa\\Documents\\Coding\\Bachellor-project-2025\\database_files";
-
-  public StorageService() {
-    createDirectory(BASE_DIR);
-  }
+  private final ScreenshotRepository screenshotRepository;
+  private final LogService logger;
 
   public String saveApk(MultipartFile file, UUID userId) throws IOException {
     if (file.isEmpty()) {
@@ -64,5 +70,44 @@ public class StorageService {
     if (!directory.exists()) {
       directory.mkdirs();
     }
+  }
+
+  public ApplicationJobScreenshotsResponse getApplicationScreenshotsGroupedByJob(UUID applicationId) {
+    logger.addLog("Getting screenshots for application: " + applicationId);
+    List<ScreenShot> screenshots = screenshotRepository.findByApplicationId(applicationId);
+    logger.addLog("Found " + screenshots.size() + " screenshots for application: " + applicationId);
+    if (screenshots.isEmpty()) {
+      return null;
+    }
+
+    String appName = screenshots.get(0).getApplication().getName();
+    logger.addLog("Application name: " + appName);
+
+    var jobsData = screenshots.stream()
+      .filter(s -> s.getTestDevice() != null && s.getTestDevice().getTestRun() != null)
+      .collect(Collectors.groupingBy(s -> s.getTestDevice().getTestRun()))
+      .entrySet().stream()
+      .map(entry -> {
+        var testRun = entry.getKey();
+        var job = testRun.getJob();
+        var meta = entry.getValue().stream()
+          .map(s -> new ApplicationJobScreenshotsResponse.ScreenshotMetadataDTO(
+            s.getId(),
+            s.getFileName(),
+            String.format("/api/v1/images/%s/%s/%s/%s",
+              testRun.getUser().getId(),
+              s.getApplication().getPackageName(),
+              testRun.getId(),
+              s.getFileName())
+          )).toList();
+
+        return new ApplicationJobScreenshotsResponse.JobGroupDTO(
+          job != null ? job.getId() : null,
+          testRun.getId(),
+          meta
+        );
+      }).toList();
+
+    return new ApplicationJobScreenshotsResponse(applicationId, appName, jobsData);
   }
 }

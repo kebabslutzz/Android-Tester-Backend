@@ -107,7 +107,7 @@ public class TestExecutionService {
 
       command.add("-is_emulator");
       command.add("-timeout");
-      command.add("90");
+      command.add("900");
       command.add("-keep_app");
 
 
