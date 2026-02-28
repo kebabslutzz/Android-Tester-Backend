@@ -22,5 +22,7 @@
   <include file="logs/0015-add-created-time-for-device.xml" relativeToChangelogFile="true"/>
   <include file="logs/0016-add-apk-path-to-application.xml" relativeToChangelogFile="true"/>
   <include file="logs/0017-add-file-location-to-test-run-defect-image.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0018-add-user-role.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0019-remove-password-salt-from-user.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

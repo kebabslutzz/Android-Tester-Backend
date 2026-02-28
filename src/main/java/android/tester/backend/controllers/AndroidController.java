@@ -2,6 +2,7 @@ package android.tester.backend.controllers;
 
 import android.tester.backend.dtos.StartTestRequest;
 import android.tester.backend.entities.*;
+import android.tester.backend.enums.Role;
 import android.tester.backend.repositories.*;
 import android.tester.backend.services.logging.LogService;
 import android.tester.backend.services.shellCommands.ShellCommandService;
@@ -118,15 +119,17 @@ public class AndroidController {
 
   @PostMapping("/test/start")
   public ResponseEntity<String> startTest(@RequestBody StartTestRequest request) {
+    logger.addLog("Starting test for user: " + request.toString());
     // 1. Validate User
     User user = userRepository.findById(FAKE_USER_ID).orElseGet(() -> {
       User newUser = User.builder()
         .id(FAKE_USER_ID)
         .username("fakeuser")
         .password("password")
-        .salt("abc")
+//        .salt("abc")
         .email("test@email.com")
 //        .version(0)
+        .role(Role.USER)
         .created(OffsetDateTime.now())
         .build();
       return userRepository.save(newUser);
