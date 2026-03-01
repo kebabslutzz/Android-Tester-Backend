@@ -62,6 +62,10 @@ public class User implements UserDetails {
     this.editCount = (this.editCount == null ? 0 : this.editCount) + 1;
   }
 
+  public String getActualName() {
+    return this.username;
+  }
+
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     return List.of(new SimpleGrantedAuthority(role.name()));

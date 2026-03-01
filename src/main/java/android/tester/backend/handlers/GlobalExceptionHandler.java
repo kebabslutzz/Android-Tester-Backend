@@ -8,7 +8,6 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -18,34 +17,34 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<List<ErrorResponseRecord>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-    List<ErrorResponseRecord> errors = ex.getBindingResult().getFieldErrors().stream()
-      .map(fieldError -> new ErrorResponseRecord(
-        fieldError.getField() + ": " + fieldError.getDefaultMessage(),
-        HttpStatus.BAD_REQUEST.value()
-      ))
-      .collect(Collectors.toList());
-    return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorResponseRecord handleValidationExceptions(MethodArgumentNotValidException ex) {
+    // Concatenate all validation errors into a single string for simple clients
+    // OR create a specialized ErrorResponseRecord that takes a list
+    String errorMessage = ex.getBindingResult().getFieldErrors().stream()
+      .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+      .collect(Collectors.joining(", "));
+
+    return new ErrorResponseRecord(errorMessage, HttpStatus.BAD_REQUEST.value());
   }
 
   // Uses standard ValidationException or custom ones if you create them
   @ExceptionHandler(ValidationException.class)
-  public ResponseEntity<ErrorResponseRecord> handleValidationException(ValidationException ex) {
-    ErrorResponseRecord error = new ErrorResponseRecord(ex.getMessage(), HttpStatus.BAD_REQUEST.value());
-    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorResponseRecord handleValidationException(ValidationException ex) {
+    return new ErrorResponseRecord(ex.getMessage(), HttpStatus.BAD_REQUEST.value());
   }
 
   @ExceptionHandler(HttpMessageNotReadableException.class)
-  public ResponseEntity<ErrorResponseRecord> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
-    ErrorResponseRecord error = new ErrorResponseRecord("Invalid request body", HttpStatus.BAD_REQUEST.value());
-    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorResponseRecord handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+    return new ErrorResponseRecord("Invalid request body", HttpStatus.BAD_REQUEST.value());
   }
 
   @ExceptionHandler(BadCredentialsException.class)
