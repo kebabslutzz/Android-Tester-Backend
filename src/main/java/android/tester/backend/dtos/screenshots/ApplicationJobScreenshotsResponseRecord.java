@@ -1,9 +1,9 @@
-package android.tester.backend.dtos;
+package android.tester.backend.dtos.screenshots;
 
 import java.util.List;
 import java.util.UUID;
 
-public record ApplicationJobScreenshotsResponse(
+public record ApplicationJobScreenshotsResponseRecord(
   UUID applicationId,
   String applicationName,
   List<JobGroupDTO> jobs
