@@ -26,12 +26,16 @@ public class TestDevice {
 
   private String name;
   private Boolean tablet;
-  private Long screenSize;
+  private Double screenSize;
   private Boolean englishInterface;
   private Boolean leftToRight;
 
   private String size;
   private String resolution;
+
+  private Integer apiLevel;  // e.g. 30
+  private String systemImage; // e.g. "system-images;android-30;google_apis;x86"
+  private Integer dpi;
 
   @OneToMany(mappedBy = "testDevice")
   private Set<ScreenShot> screenShots;

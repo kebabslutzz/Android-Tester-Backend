@@ -2,6 +2,8 @@ package android.tester.backend.controllers;
 
 import android.tester.backend.dtos.AvdResponseDto;
 import android.tester.backend.dtos.StartTestRequest;
+import android.tester.backend.dtos.android.AvailableAPILevelsDto;
+import android.tester.backend.dtos.android.AvailableDeviceImageDto;
 import android.tester.backend.entities.Application;
 import android.tester.backend.repositories.*;
 import android.tester.backend.services.adb.AvdService;
@@ -9,6 +11,7 @@ import android.tester.backend.services.logging.LogService;
 import android.tester.backend.services.shellCommands.ShellCommandService;
 import android.tester.backend.services.storage.StorageService;
 import android.tester.backend.services.test.TestExecutionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -104,7 +107,7 @@ public class AndroidController {
   }
 
   @PostMapping("/test/start")
-  public String startTest(@RequestBody StartTestRequest request, Principal connectedUser) {
+  public String startTest(@Valid @RequestBody StartTestRequest request, Principal connectedUser) {
     UUID jobId = testExecutionService.startTestForUser(request, connectedUser);
     logger.addLog("Started test execution for job: " + jobId);
     return "Test started. Job ID: " + jobId.toString();
@@ -113,6 +116,16 @@ public class AndroidController {
   @GetMapping("/avds")
   public List<AvdResponseDto> getAvds() {
     return avdService.getAvailableAvds();
+  }
+
+  @GetMapping("/images")
+  public List<AvailableDeviceImageDto> getAvailableImages() {
+    return avdService.getInstalledSystemImages();
+  }
+
+  @GetMapping("/api-levels")
+  public List<AvailableAPILevelsDto> getAvailableApiLevels() {
+    return avdService.getAvailableTargets();
   }
 
 //  @PostMapping("/test/start")

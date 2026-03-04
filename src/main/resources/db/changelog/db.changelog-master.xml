@@ -25,5 +25,6 @@
   <include file="logs/0018-add-user-role.xml" relativeToChangelogFile="true"/>
   <include file="logs/0019-remove-password-salt-from-user.xml" relativeToChangelogFile="true"/>
   <include file="logs/0020-create-refresh-token-schema.xml" relativeToChangelogFile="true"/>
+  <include file="logs/0021-add-api-level-dpi-and-image.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

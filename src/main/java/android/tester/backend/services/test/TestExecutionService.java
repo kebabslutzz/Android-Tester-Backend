@@ -80,13 +80,19 @@ public class TestExecutionService {
       .build();
     testRun = testRunRepository.save(testRun);
 
+    // Generate Unique AVD Name here
+    String uniqueAvdName = "avd_" + currentUser.getId() + "_" + System.currentTimeMillis();
+
     // 3. Create TestDevice
     TestDevice testDevice = TestDevice.builder()
       .testRun(testRun)
-      .name(request.deviceName())
+      .name(uniqueAvdName)
       .resolution(request.resolution())
       .screenSize(request.screenSize())
       .tablet(request.tablet())
+      .apiLevel(request.apiLevel())
+      .systemImage(request.systemImage())
+      .dpi(request.dpi())
       .created(OffsetDateTime.now())
       .build();
     testDeviceRepository.save(testDevice);

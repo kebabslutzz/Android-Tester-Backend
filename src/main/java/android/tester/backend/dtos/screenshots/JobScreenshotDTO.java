@@ -3,9 +3,9 @@ package android.tester.backend.dtos.screenshots;
 import java.util.List;
 import java.util.UUID;
 
-public record ApplicationJobScreenshotsResponseRecord(
+public record JobScreenshotDTO(
   UUID applicationId,
-  String applicationName,
+  String appName,
   List<JobGroupDTO> jobs
 ) {
   public record JobGroupDTO(

@@ -12,6 +12,7 @@ import android.tester.backend.repositories.TestRunDefectRepository;
 import android.tester.backend.services.logging.LogService;
 import android.tester.backend.services.storage.StorageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LegacyAnalysisService {
@@ -47,14 +49,21 @@ public class LegacyAnalysisService {
                                 android.tester.backend.legacy.java.edu.ktu.screenshotanalyser.database.DataBase.Application app,
                                 File dataFolder, List<android.tester.backend.legacy.java.edu.ktu.screenshotanalyser.context.TestDevice> testDevices,
                                 android.tester.backend.legacy.java.edu.ktu.screenshotanalyser.checks.SystemContext systemContext) {
+
+    logService.addLog("Starting Legacy analysis for screenshot: " + screenShot.getId());
+
     if (!imageFile.exists() || !layoutFile.exists()) {
       System.err.println("Files missing for analysis: " + screenShot.getId());
       return;
     }
 
+    logService.addLog("Files found for analysis: " + screenShot.getId());
+
     try {
       // 1. Construct the Legacy 'context' objects
       AppContext legacyContext = new AppContext(app, dataFolder, testDevices, systemContext);
+
+      logService.addLog("Legacy context constructed: " + screenShot.getId());
 
       // Construct the State object required by legacy checkers
       // Assuming constructor: State(String name, AppContext context, File image, File config, File logic)
@@ -65,6 +74,8 @@ public class LegacyAnalysisService {
         layoutFile,
         null // logic file nullable?
       );
+
+      logService.addLog("Looking for a state");
 
       // 2. Prepare Results Collector
       StateCheckResults legacyResults = new StateCheckResults(legacyState);
@@ -94,6 +105,8 @@ public class LegacyAnalysisService {
               .build()
           ));
 
+        logService.addLog("DefectType found: " + defectType.getId());
+
         // Save Defect (The low-level finding)
         Defect defect = Defect.builder()
           .screenShot(screenShot)
@@ -102,6 +115,8 @@ public class LegacyAnalysisService {
           .build();
 
         defectRepository.save(defect);
+
+        logService.addLog("Defect saved: " + defect.getId());
 
         // Save TestRunDefect (The report item)
         // We aggregate specific defects into a report item.
@@ -121,7 +136,11 @@ public class LegacyAnalysisService {
           .message(description)
           .build();
 
+
         testRunDefect = testRunDefectRepository.save(testRunDefect);
+
+        logService.addLog("TestRunDefect created: " + testRunDefect.getId());
+
 
         // Create Visual Proof Image
         // Draw the bounding box on the image
@@ -162,8 +181,15 @@ public class LegacyAnalysisService {
             g2d.drawRect(annotation.bounds().x, annotation.bounds().y, annotation.bounds().width, annotation.bounds().height);
             g2d.dispose();
 
+            logService.addLog("Visual proof created for defect: " + ruleCode);
+
             // CHANGED: Save to storage service instead of byte array
-            UUID userId = testRun.getUser() != null ? testRun.getUser().getId() : UUID.fromString("00000000-0000-0000-0000-000000000001"); // Fallback if user is null or handle appropriately
+            if (testRun.getUser() == null) {
+              throw new RuntimeException("TestRun must have an associated User for analysis storage paths.");
+            }
+            UUID userId = testRun.getUser().getId();
+
+            logService.addLog("Saving visual proof to storage for user: " + userId);
 
             // Assuming packageName is available on Application entity, fallback to "unknown.package" if needed
             String packageName = application.getPackageName() != null ? application.getPackageName() : "unknown.package";
@@ -175,6 +201,8 @@ public class LegacyAnalysisService {
               testRun.getId()
             );
 
+            logService.addLog("Visual proof saved to storage: " + savedFileName);
+
             TestRunDefectImage defectImage = TestRunDefectImage.builder()
               .testRunDefect(testRunDefect)
               .fileLocation(savedFileName) // Store filename
@@ -182,6 +210,8 @@ public class LegacyAnalysisService {
               .build();
 
             testRunDefectImageRepository.save(defectImage);
+
+            logService.addLog("Visual proof saved to database: " + defectImage.getId());
 
           } catch (Exception e) {
             logService.addLog("Failed to create visual proof for defect: " + ruleCode);

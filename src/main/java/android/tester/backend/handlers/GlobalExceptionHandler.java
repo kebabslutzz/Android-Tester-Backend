@@ -1,13 +1,12 @@
 package android.tester.backend.handlers;
 
 import android.tester.backend.dtos.ErrorResponseRecord;
-import android.tester.backend.exceptions.ConflictException;
-import android.tester.backend.exceptions.NotFoundException;
-import android.tester.backend.exceptions.ValidationException;
+import android.tester.backend.exceptions.*;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -17,6 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -99,4 +99,30 @@ public class GlobalExceptionHandler {
     ex.printStackTrace();
     return new ErrorResponseRecord("An unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR.value());
   }
+
+  @ExceptionHandler(AvdCreationException.class)
+  public ResponseEntity<Object> handleAvdCreationException(AvdCreationException ex) {
+    return ResponseEntity.status(601).body(Map.of("error", "AVD Creation Failed", "message", ex.getMessage()));
+  }
+
+  @ExceptionHandler(DeviceBootException.class)
+  public ResponseEntity<Object> handleDeviceBootException(DeviceBootException ex) {
+    return ResponseEntity.status(602).body(Map.of("error", "AVD Boot Failed", "message", ex.getMessage()));
+  }
+
+  @ExceptionHandler(TestExecutionException.class)
+  public ResponseEntity<Object> handleTestExecutionException(TestExecutionException ex) {
+    return ResponseEntity.status(603).body(Map.of("error", "Test Execution Failed", "message", ex.getMessage()));
+  }
+
+  @ExceptionHandler(AvdImageNotFoundException.class)
+  public ResponseEntity<Object> handleAvdImageNotFoundException(AvdImageNotFoundException ex) {
+    return ResponseEntity.status(604).body(Map.of("error", "Invalid System Image", "message", ex.getMessage()));
+  }
+
+  @ExceptionHandler(InvalidApiLevelException.class)
+  public ResponseEntity<Object> handleInvalidApiLevelException(InvalidApiLevelException ex) {
+    return ResponseEntity.status(605).body(Map.of("error", "Invalid API Level", "message", ex.getMessage()));
+  }
+
 }

@@ -1,12 +1,15 @@
 package android.tester.backend.services.storage;
 
-import android.tester.backend.dtos.screenshots.ApplicationJobScreenshotsResponseRecord;
+import android.tester.backend.dtos.application.ApplicationInfoDTO;
+import android.tester.backend.dtos.screenshots.JobScreenshotDTO;
 import android.tester.backend.entities.Application;
+import android.tester.backend.entities.Job;
 import android.tester.backend.entities.ScreenShot;
 import android.tester.backend.entities.User;
 import android.tester.backend.exceptions.NotFoundException;
 import android.tester.backend.exceptions.ValidationException;
 import android.tester.backend.repositories.ApplicationRepository;
+import android.tester.backend.repositories.JobRepository;
 import android.tester.backend.repositories.ScreenshotRepository;
 import android.tester.backend.services.logging.LogService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,7 @@ import java.nio.file.Paths;
 import java.security.Principal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,6 +43,7 @@ public class StorageService {
   private final ScreenshotRepository screenshotRepository;
   private final ApplicationRepository applicationRepository;
   private final LogService logger;
+  private final JobRepository jobRepository;
 
   public String saveApk(MultipartFile file, UUID userId) throws IOException {
     if (file.isEmpty()) {
@@ -126,9 +131,8 @@ public class StorageService {
     }
   }
 
-  public ApplicationJobScreenshotsResponseRecord getApplicationScreenshotsGroupedByJob(UUID applicationId, Principal connectedUser) {
+  public JobScreenshotDTO getApplicationScreenshotsGroupedByJob(UUID applicationId, Principal connectedUser) {
     var currentUser = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
-
     List<ScreenShot> screenshots = screenshotRepository.findByApplicationId(applicationId);
     if (screenshots.isEmpty()) {
       return null;
@@ -144,9 +148,9 @@ public class StorageService {
       return null;
     }
 
-    String appName = screenshots.get(0).getApplication().getName();
+    String appName = userScreenshots.get(0).getApplication().getName();
 
-    var jobsData = screenshots.stream()
+    var jobsData = userScreenshots.stream()
       .filter(s -> s.getTestDevice() != null && s.getTestDevice().getTestRun() != null)
       .collect(Collectors.groupingBy(s -> s.getTestDevice().getTestRun()))
       .entrySet().stream()
@@ -154,24 +158,23 @@ public class StorageService {
         var testRun = entry.getKey();
         var job = testRun.getJob();
         var meta = entry.getValue().stream()
-          .map(s -> new ApplicationJobScreenshotsResponseRecord.ScreenshotMetadataDTO(
+          .map(s -> new JobScreenshotDTO.ScreenshotMetadataDTO(
             s.getId(),
             s.getFileName(),
-            String.format("/api/v1/images/%s/%s/%s/%s",
-              testRun.getUser().getId(),
+            String.format("/api/v1/images/%s/%s/%s",
               s.getApplication().getPackageName(),
               testRun.getId(),
               s.getFileName())
           )).toList();
 
-        return new ApplicationJobScreenshotsResponseRecord.JobGroupDTO(
+        return new JobScreenshotDTO.JobGroupDTO(
           job != null ? job.getId() : null,
           testRun.getId(),
           meta
         );
       }).toList();
 
-    return new ApplicationJobScreenshotsResponseRecord(applicationId, appName, jobsData);
+    return new JobScreenshotDTO(applicationId, appName, jobsData);
   }
 
   public ResponseEntity<Resource> serveScreenshot(String packageName, String testRunId, String filename, Principal connectedUser) throws Exception {
@@ -182,6 +185,46 @@ public class StorageService {
 
     if (!resource.exists() || !resource.isReadable()) {
       throw new NotFoundException("Screenshot not found: " + filename);
+    }
+    return ResponseEntity.ok()
+      .contentType(MediaType.IMAGE_PNG)
+      .body(resource);
+  }
+
+  public List<ApplicationInfoDTO> getUserApplicationsWithJobs(Principal connectedUser) {
+    var currentUser = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+    List<Job> userJobs = jobRepository.findByUser(currentUser);
+    Map<Application, List<Job>> appJobs = userJobs.stream()
+      .collect(Collectors.groupingBy(Job::getApplication));
+    return appJobs.entrySet().stream()
+      .map(entry -> {
+        Application app = entry.getKey();
+        List<ApplicationInfoDTO.JobGroupDTO> jobGroups = entry.getValue().stream()
+          .map(job -> new ApplicationInfoDTO.JobGroupDTO(
+            job.getId(),
+            job.getTestRun().getId(),
+            job.getTestRun().getRunDate() != null ? job.getTestRun().getRunDate() : job.getCreated(),
+            job.getStatus() != null ? job.getStatus().getName() : "Unknown"
+          ))
+          .collect(Collectors.toList());
+        return new ApplicationInfoDTO(
+          app.getId(),
+          app.getName(),
+          app.getPackageName(),
+          app.getVersion(),
+          app.getCreated(),
+          jobGroups
+        );
+      })
+      .collect(Collectors.toList());
+  }
+
+  public ResponseEntity<Resource> serveDefectImage(String packageName, String testRunId, String filename, Principal connectedUser) throws Exception {
+    var currentUser = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+    Path filePath = Paths.get(BASE_DIR, currentUser.getId().toString(), packageName, testRunId, "defect_images", filename);
+    Resource resource = new UrlResource(filePath.toUri());
+    if (!resource.exists() || !resource.isReadable()) {
+      throw new NotFoundException("Defect image not found: " + filename);
     }
     return ResponseEntity.ok()
       .contentType(MediaType.IMAGE_PNG)

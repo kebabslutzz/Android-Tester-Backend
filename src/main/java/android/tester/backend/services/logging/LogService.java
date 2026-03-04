@@ -37,7 +37,8 @@ public class LogService {
   private boolean excludeMessage(String message) {
     List<String> excludes = List.of(
       "adb server version",
-      "C:/buildbot/src/googleplex-android/emu-36-3-release/hardware/google/gfxstream/host/gl/glestranslator/gles_v2/gles_v2_imp"
+      "C:/buildbot/src/googleplex-android/emu-36-3-release/hardware/google/gfxstream/host/gl/glestranslator/gles_v2/gles_v2_imp",
+      "Ignore IPv6 address"
     );
 
     for (String ex : excludes) {
